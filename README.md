@@ -119,19 +119,73 @@ import { ThemeSelector } from 'astro-better-nav-bar';
 
 ## Sidebar toggle
 
-For docs-style layouts with a collapsible sidebar, pass your toggle button via the `sidebar-toggle` slot:
+The `sidebar-toggle` slot renders at the left of the mobile bar (hidden on desktop). Use it to place a hamburger that opens a collapsible docs sidebar.
+
+The recommended approach is CSS-only using a hidden checkbox and `:has()`. No JavaScript required.
+
+In your layout:
 
 ```astro
+---
+// layout.astro
+---
+<!-- checkbox drives sidebar open/close state via CSS :has() -->
+<input type="checkbox" id="nav-sidebar-open" class="nav-sidebar-checkbox" aria-hidden="true">
+
 <NavBar ...>
-  <button
-    slot="sidebar-toggle"
-    data-widget="visibility-button"
-    data-element="side-nav"
-    aria-label="Show Menu"
-  >
+  <label slot="sidebar-toggle" for="nav-sidebar-open" class="nav-sidebar-toggle" aria-label="Open navigation">
     <!-- hamburger icon -->
-  </button>
+    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 010 1.5H1.75A.75.75 0 011 7.75zm0 5a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H1.75a.75.75 0 01-.75-.75z"/>
+    </svg>
+  </label>
 </NavBar>
+
+<!-- clicking the backdrop label unchecks the checkbox, closing the sidebar -->
+<label class="sidebar-backdrop" for="nav-sidebar-open" aria-hidden="true"></label>
+
+<aside class="doc-sidebar">...</aside>
+```
+
+In your CSS:
+
+```css
+.nav-sidebar-checkbox { position: fixed; opacity: 0; pointer-events: none; width: 0; height: 0; }
+
+/* style the label to look like an icon button */
+.nav-sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  width: 1.75rem;
+  border-radius: 0.25rem;
+  color: var(--nav-text, #fff);
+  cursor: pointer;
+}
+/* hide when sidebar is already visible inline */
+@media (min-width: 769px) { .nav-sidebar-toggle { display: none; } }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  background: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .doc-sidebar {
+    position: fixed;
+    left: 0; top: 3.75rem; bottom: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  body:has(.nav-sidebar-checkbox:checked) .doc-sidebar { transform: translateX(0); }
+  body:has(.nav-sidebar-checkbox:checked) .sidebar-backdrop { display: block; }
+}
 ```
 
 ## CSS custom properties
